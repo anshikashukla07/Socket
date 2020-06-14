@@ -1,0 +1,67 @@
+<html>
+    <head>
+        <title>
+            Notification System
+        </title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+        <style>
+            .main {
+                display: flex;
+                margin: auto;
+                width: 20%;
+                border: 3px solid green;
+                padding: 10px;
+                flex-direction: column;
+                justify-content: space-evenly;
+            }
+
+            .notification {
+                border: 2px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div class="main">
+            <form>
+                <input id="message">
+                <button id="send">Send</button>
+            </form>
+            <div class="container">
+                <ul>                       
+                </ul>
+            </div>
+        </div>
+    </body>
+    <script>
+        let socket = io("http://localhost:5000/notify");
+
+        socket.on("receive", (data) => {
+            console.log(data);
+            let node = document.createElement("LI");
+            node.classList.add("notification");
+            let textnode = document.createTextNode(data.message);
+            node.appendChild(textnode);
+            document.querySelector("ul").appendChild(node);
+            notifyMe(data);
+        });
+
+        document.querySelector("form").addEventListener("submit", (evt) => {
+            evt.preventDefault();
+            let message = document.querySelector("#message");
+            socket.emit("sendnotification", {title: "Notify", message: message.value});
+            message.value = "";
+        })
+
+        const notifyMe = (data) => {
+            navigator.serviceWorker.register("sw.js");
+            Notification.requestPermission((result) => {
+                if(result === "granted") {
+                    navigator.serviceWorker.ready.then((registration) => {
+                        registration.showNotification(data.message)
+                    })
+                }
+            })
+        }
+    </script>
+</html>
